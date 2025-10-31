@@ -2,13 +2,15 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
+import java.util.Map;
 
 /**
  * PriorityQueueGUI - Interactive GUI for testing PriorityQueue exercises
- * This GUI allows students to visually test their EmergencyRoom and TaskScheduler implementations
+ * This GUI allows students to visually test their EmergencyRoom, TaskScheduler,
+ * and HuffmanCompressor implementations
  */
 public class PriorityQueueGUI extends JFrame {
-    
+
     // Exercise 1: Emergency Room components
     private EmergencyRoom emergencyRoom;
     private DefaultTableModel patientTableModel;
@@ -18,7 +20,7 @@ public class PriorityQueueGUI extends JFrame {
     private JSpinner arrivalTimeSpinner;
     private JLabel waitingCountLabel;
     private JTextArea erOutputArea;
-    
+
     // Exercise 2: Task Scheduler components
     private TaskScheduler taskScheduler;
     private DefaultTableModel taskTableModel;
@@ -29,46 +31,57 @@ public class PriorityQueueGUI extends JFrame {
     private JTextField assignedToField;
     private JLabel remainingTasksLabel;
     private JTextArea tsOutputArea;
-    
+
+    // Exercise 3: Huffman Compression components
+    private HuffmanCompressor huffmanCompressor;
+    private JTextArea inputTextArea;
+    private JTextArea compressedBitsArea;
+    private JTextArea decompressedTextArea;
+    private JTextArea huffmanCodesArea;
+    private JTextArea treeVisualizationArea;
+    private JLabel compressionStatsLabel;
+
     public PriorityQueueGUI() {
         setTitle("PriorityQueue Exercises - Student Template");
-        setSize(900, 700);
+        setSize(1000, 750);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        
+
         // Initialize data structures
         emergencyRoom = new EmergencyRoom();
         taskScheduler = new TaskScheduler();
-        
+        huffmanCompressor = new HuffmanCompressor();
+
         // Create tabbed pane
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Exercise 1: Emergency Room", createEmergencyRoomPanel());
         tabbedPane.addTab("Exercise 2: Task Scheduler", createTaskSchedulerPanel());
-        
+        tabbedPane.addTab("Exercise 3: Huffman Compression", createHuffmanPanel());
+
         add(tabbedPane);
     }
-    
+
     /**
      * Creates the Emergency Room exercise panel
      */
     private JPanel createEmergencyRoomPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         // Top panel - Input form
         JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setBorder(BorderFactory.createTitledBorder("Admit Patient"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        
+
         // Patient Name
         gbc.gridx = 0; gbc.gridy = 0;
         inputPanel.add(new JLabel("Patient Name:"), gbc);
         gbc.gridx = 1;
         patientNameField = new JTextField(15);
         inputPanel.add(patientNameField, gbc);
-        
+
         // Severity Level
         gbc.gridx = 0; gbc.gridy = 1;
         inputPanel.add(new JLabel("Severity Level:"), gbc);
@@ -76,14 +89,14 @@ public class PriorityQueueGUI extends JFrame {
         String[] severityLevels = {"1 - Critical", "2 - Urgent", "3 - Semi-urgent", "4 - Non-urgent"};
         severityCombo = new JComboBox<>(severityLevels);
         inputPanel.add(severityCombo, gbc);
-        
+
         // Arrival Time
         gbc.gridx = 0; gbc.gridy = 2;
         inputPanel.add(new JLabel("Arrival Time (min):"), gbc);
         gbc.gridx = 1;
         arrivalTimeSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1000, 1));
         inputPanel.add(arrivalTimeSpinner, gbc);
-        
+
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout());
         JButton admitButton = new JButton("Admit Patient");
@@ -91,16 +104,16 @@ public class PriorityQueueGUI extends JFrame {
         JButton peekButton = new JButton("Peek Next Patient");
         JButton clearButton = new JButton("Clear All");
         JButton sampleButton = new JButton("Load Sample Data");
-        
+
         buttonPanel.add(admitButton);
         buttonPanel.add(treatButton);
         buttonPanel.add(peekButton);
         buttonPanel.add(clearButton);
         buttonPanel.add(sampleButton);
-        
+
         gbc.gridx = 0; gbc.gridy = 3; gbc.gridwidth = 2;
         inputPanel.add(buttonPanel, gbc);
-        
+
         // Center panel - Patient table
         String[] patientColumns = {"Priority", "Name", "Severity", "Description", "Arrival Time"};
         patientTableModel = new DefaultTableModel(patientColumns, 0) {
@@ -112,12 +125,12 @@ public class PriorityQueueGUI extends JFrame {
         patientTable = new JTable(patientTableModel);
         patientTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         patientTable.setRowHeight(25);
-        
+
         // Color code rows by severity
         patientTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
-                    boolean isSelected, boolean hasFocus, int row, int column) {
+                                                           boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 if (!isSelected) {
                     String severity = table.getValueAt(row, 2).toString();
@@ -141,60 +154,60 @@ public class PriorityQueueGUI extends JFrame {
                 return c;
             }
         });
-        
+
         JScrollPane tableScrollPane = new JScrollPane(patientTable);
         tableScrollPane.setBorder(BorderFactory.createTitledBorder("Patient Queue (Priority Order)"));
-        
+
         // Bottom panel - Status and output
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
-        
+
         waitingCountLabel = new JLabel("Waiting Patients: 0");
         waitingCountLabel.setFont(new Font("Arial", Font.BOLD, 14));
         bottomPanel.add(waitingCountLabel, BorderLayout.NORTH);
-        
+
         erOutputArea = new JTextArea(8, 50);
         erOutputArea.setEditable(false);
         erOutputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane outputScrollPane = new JScrollPane(erOutputArea);
         outputScrollPane.setBorder(BorderFactory.createTitledBorder("Console Output"));
         bottomPanel.add(outputScrollPane, BorderLayout.CENTER);
-        
+
         // Add all panels to main panel
         mainPanel.add(inputPanel, BorderLayout.NORTH);
         mainPanel.add(tableScrollPane, BorderLayout.CENTER);
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-        
+
         // Event handlers
         admitButton.addActionListener(e -> admitPatient());
         treatButton.addActionListener(e -> treatNextPatient());
         peekButton.addActionListener(e -> peekNextPatient());
         clearButton.addActionListener(e -> clearEmergencyRoom());
         sampleButton.addActionListener(e -> loadSamplePatients());
-        
+
         return mainPanel;
     }
-    
+
     /**
      * Creates the Task Scheduler exercise panel
      */
     private JPanel createTaskSchedulerPanel() {
         JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
         mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
         // Top panel - Input form
         JPanel inputPanel = new JPanel(new GridBagLayout());
         inputPanel.setBorder(BorderFactory.createTitledBorder("Add Task"));
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        
+
         // Task Name
         gbc.gridx = 0; gbc.gridy = 0;
         inputPanel.add(new JLabel("Task Name:"), gbc);
         gbc.gridx = 1;
         taskNameField = new JTextField(15);
         inputPanel.add(taskNameField, gbc);
-        
+
         // Priority Level
         gbc.gridx = 0; gbc.gridy = 1;
         inputPanel.add(new JLabel("Priority Level:"), gbc);
@@ -202,21 +215,21 @@ public class PriorityQueueGUI extends JFrame {
         String[] priorityLevels = {"1 - High", "2 - Medium", "3 - Low"};
         priorityCombo = new JComboBox<>(priorityLevels);
         inputPanel.add(priorityCombo, gbc);
-        
+
         // Estimated Time
         gbc.gridx = 0; gbc.gridy = 2;
         inputPanel.add(new JLabel("Estimated Time (min):"), gbc);
         gbc.gridx = 1;
         estimatedTimeSpinner = new JSpinner(new SpinnerNumberModel(30, 1, 500, 5));
         inputPanel.add(estimatedTimeSpinner, gbc);
-        
+
         // Assigned To
         gbc.gridx = 0; gbc.gridy = 3;
         inputPanel.add(new JLabel("Assigned To:"), gbc);
         gbc.gridx = 1;
         assignedToField = new JTextField(15);
         inputPanel.add(assignedToField, gbc);
-        
+
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout());
         JButton addButton = new JButton("Add Task");
@@ -224,16 +237,16 @@ public class PriorityQueueGUI extends JFrame {
         JButton completeButton = new JButton("Complete Task");
         JButton clearButton = new JButton("Clear All");
         JButton sampleButton = new JButton("Load Sample Data");
-        
+
         buttonPanel.add(addButton);
         buttonPanel.add(nextButton);
         buttonPanel.add(completeButton);
         buttonPanel.add(clearButton);
         buttonPanel.add(sampleButton);
-        
+
         gbc.gridx = 0; gbc.gridy = 4; gbc.gridwidth = 2;
         inputPanel.add(buttonPanel, gbc);
-        
+
         // Center panel - Task table
         String[] taskColumns = {"Priority", "Task Name", "Priority Level", "Description", "Time (min)", "Assigned To"};
         taskTableModel = new DefaultTableModel(taskColumns, 0) {
@@ -245,12 +258,12 @@ public class PriorityQueueGUI extends JFrame {
         taskTable = new JTable(taskTableModel);
         taskTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         taskTable.setRowHeight(25);
-        
+
         // Color code rows by priority
         taskTable.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value,
-                    boolean isSelected, boolean hasFocus, int row, int column) {
+                                                           boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 if (!isSelected) {
                     String priority = table.getValueAt(row, 2).toString();
@@ -271,41 +284,163 @@ public class PriorityQueueGUI extends JFrame {
                 return c;
             }
         });
-        
+
         JScrollPane tableScrollPane = new JScrollPane(taskTable);
         tableScrollPane.setBorder(BorderFactory.createTitledBorder("Task Queue (Priority Order)"));
-        
+
         // Bottom panel - Status and output
         JPanel bottomPanel = new JPanel(new BorderLayout(5, 5));
-        
+
         remainingTasksLabel = new JLabel("Remaining Tasks: 0");
         remainingTasksLabel.setFont(new Font("Arial", Font.BOLD, 14));
         bottomPanel.add(remainingTasksLabel, BorderLayout.NORTH);
-        
+
         tsOutputArea = new JTextArea(8, 50);
         tsOutputArea.setEditable(false);
         tsOutputArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         JScrollPane outputScrollPane = new JScrollPane(tsOutputArea);
         outputScrollPane.setBorder(BorderFactory.createTitledBorder("Console Output"));
         bottomPanel.add(outputScrollPane, BorderLayout.CENTER);
-        
+
         // Add all panels to main panel
         mainPanel.add(inputPanel, BorderLayout.NORTH);
         mainPanel.add(tableScrollPane, BorderLayout.CENTER);
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
-        
+
         // Event handlers
         addButton.addActionListener(e -> addTask());
         nextButton.addActionListener(e -> getNextTask());
         completeButton.addActionListener(e -> completeTask());
         clearButton.addActionListener(e -> clearTaskScheduler());
         sampleButton.addActionListener(e -> loadSampleTasks());
-        
+
         return mainPanel;
     }
-    
+
+    /**
+     * Creates the Huffman Compression exercise panel
+     */
+    private JPanel createHuffmanPanel() {
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Top panel - Input and controls
+        JPanel topPanel = new JPanel(new BorderLayout(5, 5));
+
+        // Input text area
+        JPanel inputPanel = new JPanel(new BorderLayout(5, 5));
+        inputPanel.setBorder(BorderFactory.createTitledBorder("Input Text"));
+        inputTextArea = new JTextArea(6, 40);
+        inputTextArea.setLineWrap(true);
+        inputTextArea.setWrapStyleWord(true);
+        inputTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        JScrollPane inputScroll = new JScrollPane(inputTextArea);
+        inputPanel.add(inputScroll, BorderLayout.CENTER);
+
+        // Button panel
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JButton compressButton = new JButton("Compress Text");
+        JButton decompressButton = new JButton("Decompress");
+        JButton clearButton = new JButton("Clear All");
+        JButton sampleButton = new JButton("Load Sample Text");
+
+        // Make compress button stand out
+        compressButton.setFont(new Font("Arial", Font.BOLD, 13));
+        compressButton.setBackground(new Color(70, 130, 220));
+        compressButton.setForeground(Color.WHITE);
+        compressButton.setFocusPainted(false);
+        compressButton.setBorderPainted(false);
+        compressButton.setOpaque(true);
+        compressButton.setPreferredSize(new Dimension(140, 30));
+
+        buttonPanel.add(compressButton);
+        buttonPanel.add(decompressButton);
+        buttonPanel.add(clearButton);
+        buttonPanel.add(sampleButton);
+
+        topPanel.add(inputPanel, BorderLayout.CENTER);
+        topPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        // Center panel - Split into left and right
+        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 10, 0));
+
+        // Left side - Compressed output and decompressed text
+        JPanel leftPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+
+        JPanel compressedPanel = new JPanel(new BorderLayout());
+        compressedPanel.setBorder(BorderFactory.createTitledBorder("Compressed Bits"));
+        compressedBitsArea = new JTextArea(8, 30);
+        compressedBitsArea.setEditable(false);
+        compressedBitsArea.setLineWrap(true);
+        compressedBitsArea.setFont(new Font("Monospaced", Font.PLAIN, 10));
+        compressedBitsArea.setBackground(new Color(240, 240, 240));
+        JScrollPane compressedScroll = new JScrollPane(compressedBitsArea);
+        compressedPanel.add(compressedScroll, BorderLayout.CENTER);
+
+        JPanel decompressedPanel = new JPanel(new BorderLayout());
+        decompressedPanel.setBorder(BorderFactory.createTitledBorder("Decompressed Text"));
+        decompressedTextArea = new JTextArea(8, 30);
+        decompressedTextArea.setEditable(false);
+        decompressedTextArea.setLineWrap(true);
+        decompressedTextArea.setWrapStyleWord(true);
+        decompressedTextArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        decompressedTextArea.setBackground(new Color(240, 255, 240));
+        JScrollPane decompressedScroll = new JScrollPane(decompressedTextArea);
+        decompressedPanel.add(decompressedScroll, BorderLayout.CENTER);
+
+        leftPanel.add(compressedPanel);
+        leftPanel.add(decompressedPanel);
+
+        // Right side - Huffman codes and tree visualization
+        JPanel rightPanel = new JPanel(new GridLayout(2, 1, 5, 5));
+
+        JPanel codesPanel = new JPanel(new BorderLayout());
+        codesPanel.setBorder(BorderFactory.createTitledBorder("Huffman Codes"));
+        huffmanCodesArea = new JTextArea(8, 30);
+        huffmanCodesArea.setEditable(false);
+        huffmanCodesArea.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        huffmanCodesArea.setBackground(new Color(255, 255, 240));
+        JScrollPane codesScroll = new JScrollPane(huffmanCodesArea);
+        codesPanel.add(codesScroll, BorderLayout.CENTER);
+
+        JPanel treePanel = new JPanel(new BorderLayout());
+        treePanel.setBorder(BorderFactory.createTitledBorder("Huffman Tree Structure"));
+        treeVisualizationArea = new JTextArea(8, 30);
+        treeVisualizationArea.setEditable(false);
+        treeVisualizationArea.setFont(new Font("Monospaced", Font.PLAIN, 10));
+        treeVisualizationArea.setBackground(new Color(245, 245, 255));
+        JScrollPane treeScroll = new JScrollPane(treeVisualizationArea);
+        treePanel.add(treeScroll, BorderLayout.CENTER);
+
+        rightPanel.add(codesPanel);
+        rightPanel.add(treePanel);
+
+        centerPanel.add(leftPanel);
+        centerPanel.add(rightPanel);
+
+        // Bottom panel - Statistics
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        compressionStatsLabel = new JLabel("Compression Statistics: No data");
+        compressionStatsLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        compressionStatsLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        bottomPanel.add(compressionStatsLabel, BorderLayout.NORTH);
+
+        // Add all panels to main panel
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(centerPanel, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        // Event handlers
+        compressButton.addActionListener(e -> compressText());
+        decompressButton.addActionListener(e -> decompressText());
+        clearButton.addActionListener(e -> clearHuffman());
+        sampleButton.addActionListener(e -> loadSampleText());
+
+        return mainPanel;
+    }
+
     // ========== Emergency Room Methods ==========
-    
+
     private void admitPatient() {
         try {
             String name = patientNameField.getText().trim();
@@ -313,38 +448,38 @@ public class PriorityQueueGUI extends JFrame {
                 showError("Please enter a patient name.");
                 return;
             }
-            
+
             int severity = severityCombo.getSelectedIndex() + 1;
             int arrivalTime = (Integer) arrivalTimeSpinner.getValue();
-            
+
             Patient patient = new Patient(name, severity, arrivalTime);
             emergencyRoom.admitPatient(patient);
-            
+
             erOutputArea.append("✓ Patient admitted: " + patient + "\n");
             patientNameField.setText("");
             updatePatientTable();
-            
+
         } catch (Exception ex) {
             showError("Error admitting patient: " + ex.getMessage());
         }
     }
-    
+
     private void treatNextPatient() {
         try {
             Patient patient = emergencyRoom.treatNextPatient();
             if (patient == null) {
                 erOutputArea.append("⚠ No patients waiting.\n");
             } else {
-                erOutputArea.append("► Treating patient: " + patient.getName() + 
-                                  " (Severity: " + patient.getSeverityLevel() + 
-                                  ", Arrival: " + patient.getArrivalTime() + ")\n");
+                erOutputArea.append("► Treating patient: " + patient.getName() +
+                        " (Severity: " + patient.getSeverityLevel() +
+                        ", Arrival: " + patient.getArrivalTime() + ")\n");
             }
             updatePatientTable();
         } catch (Exception ex) {
             showError("Error treating patient: " + ex.getMessage());
         }
     }
-    
+
     private void peekNextPatient() {
         try {
             Patient patient = emergencyRoom.peekNextPatient();
@@ -357,25 +492,25 @@ public class PriorityQueueGUI extends JFrame {
             showError("Error peeking patient: " + ex.getMessage());
         }
     }
-    
+
     private void clearEmergencyRoom() {
         emergencyRoom = new EmergencyRoom();
         updatePatientTable();
         erOutputArea.append("✓ Emergency room cleared.\n\n");
     }
-    
+
     private void loadSamplePatients() {
         clearEmergencyRoom();
-        
+
         Patient[] samples = {
-            new Patient("John Doe", 3, 10),
-            new Patient("Sarah Smith", 1, 15),
-            new Patient("Mike Johnson", 2, 5),
-            new Patient("Emily Davis", 4, 20),
-            new Patient("Robert Brown", 1, 25),
-            new Patient("Lisa Wilson", 2, 8)
+                new Patient("John Doe", 3, 10),
+                new Patient("Sarah Smith", 1, 15),
+                new Patient("Mike Johnson", 2, 5),
+                new Patient("Emily Davis", 4, 20),
+                new Patient("Robert Brown", 1, 25),
+                new Patient("Lisa Wilson", 2, 8)
         };
-        
+
         erOutputArea.append("=== Loading Sample Patients ===\n");
         for (Patient p : samples) {
             emergencyRoom.admitPatient(p);
@@ -384,27 +519,27 @@ public class PriorityQueueGUI extends JFrame {
         erOutputArea.append("\n");
         updatePatientTable();
     }
-    
+
     private void updatePatientTable() {
         patientTableModel.setRowCount(0);
         List<Patient> patients = emergencyRoom.getAllPatientsInOrder();
-        
+
         int priority = 1;
         for (Patient p : patients) {
             patientTableModel.addRow(new Object[]{
-                priority++,
-                p.getName(),
-                p.getSeverityLevel(),
-                p.getSeverityDescription(),
-                p.getArrivalTime()
+                    priority++,
+                    p.getName(),
+                    p.getSeverityLevel(),
+                    p.getSeverityDescription(),
+                    p.getArrivalTime()
             });
         }
-        
+
         waitingCountLabel.setText("Waiting Patients: " + emergencyRoom.getWaitingPatients());
     }
-    
+
     // ========== Task Scheduler Methods ==========
-    
+
     private void addTask() {
         try {
             String taskName = taskNameField.getText().trim();
@@ -412,44 +547,44 @@ public class PriorityQueueGUI extends JFrame {
                 showError("Please enter a task name.");
                 return;
             }
-            
+
             int priority = priorityCombo.getSelectedIndex() + 1;
             int estimatedTime = (Integer) estimatedTimeSpinner.getValue();
             String assignedTo = assignedToField.getText().trim();
             if (assignedTo.isEmpty()) {
                 assignedTo = "Unassigned";
             }
-            
+
             Task task = new Task(taskName, priority, estimatedTime, assignedTo);
             taskScheduler.addTask(task);
-            
+
             tsOutputArea.append("✓ Task added: " + task + " → " + assignedTo + "\n");
             taskNameField.setText("");
             assignedToField.setText("");
             updateTaskTable();
-            
+
         } catch (Exception ex) {
             showError("Error adding task: " + ex.getMessage());
         }
     }
-    
+
     private void getNextTask() {
         try {
             Task task = taskScheduler.getNextTask();
             if (task == null) {
                 tsOutputArea.append("⚠ No tasks in queue.\n");
             } else {
-                tsOutputArea.append("► Next task: " + task.getTaskName() + 
-                                  " (Priority: " + task.getPriorityLevel() + 
-                                  ", Time: " + task.getEstimatedMinutes() + " min, " +
-                                  "Assigned: " + task.getAssignedTo() + ")\n");
+                tsOutputArea.append("► Next task: " + task.getTaskName() +
+                        " (Priority: " + task.getPriorityLevel() +
+                        ", Time: " + task.getEstimatedMinutes() + " min, " +
+                        "Assigned: " + task.getAssignedTo() + ")\n");
             }
             updateTaskTable();
         } catch (Exception ex) {
             showError("Error getting next task: " + ex.getMessage());
         }
     }
-    
+
     private void completeTask() {
         try {
             Task task = taskScheduler.getNextTask();
@@ -463,26 +598,26 @@ public class PriorityQueueGUI extends JFrame {
             showError("Error completing task: " + ex.getMessage());
         }
     }
-    
+
     private void clearTaskScheduler() {
         taskScheduler = new TaskScheduler();
         updateTaskTable();
         tsOutputArea.append("✓ Task scheduler cleared.\n\n");
     }
-    
+
     private void loadSampleTasks() {
         clearTaskScheduler();
-        
+
         Task[] samples = {
-            new Task("Fix Login Bug", 1, 30, "Bob"),
-            new Task("Update Documentation", 3, 120, "Alice"),
-            new Task("Security Patch", 1, 15, "Alice"),
-            new Task("Code Review", 2, 45, "Charlie"),
-            new Task("Database Optimization", 2, 90, "Bob"),
-            new Task("Add Unit Tests", 2, 45, "Alice"),
-            new Task("Update README", 3, 20, "Charlie")
+                new Task("Fix Login Bug", 1, 30, "Bob"),
+                new Task("Update Documentation", 3, 120, "Alice"),
+                new Task("Security Patch", 1, 15, "Alice"),
+                new Task("Code Review", 2, 45, "Charlie"),
+                new Task("Database Optimization", 2, 90, "Bob"),
+                new Task("Add Unit Tests", 2, 45, "Alice"),
+                new Task("Update README", 3, 20, "Charlie")
         };
-        
+
         tsOutputArea.append("=== Loading Sample Tasks ===\n");
         for (Task t : samples) {
             taskScheduler.addTask(t);
@@ -491,32 +626,147 @@ public class PriorityQueueGUI extends JFrame {
         tsOutputArea.append("\n");
         updateTaskTable();
     }
-    
+
     private void updateTaskTable() {
         taskTableModel.setRowCount(0);
         List<Task> tasks = taskScheduler.getAllTasksInOrder();
-        
+
         int priority = 1;
         for (Task t : tasks) {
             taskTableModel.addRow(new Object[]{
-                priority++,
-                t.getTaskName(),
-                t.getPriorityLevel(),
-                t.getPriorityDescription(),
-                t.getEstimatedMinutes(),
-                t.getAssignedTo()
+                    priority++,
+                    t.getTaskName(),
+                    t.getPriorityLevel(),
+                    t.getPriorityDescription(),
+                    t.getEstimatedMinutes(),
+                    t.getAssignedTo()
             });
         }
-        
+
         remainingTasksLabel.setText("Remaining Tasks: " + taskScheduler.getRemainingTasks());
     }
-    
+
+    // ========== Huffman Compression Methods ==========
+
+    private void compressText() {
+        try {
+            String text = inputTextArea.getText();
+            if (text.isEmpty()) {
+                showError("Please enter some text to compress.");
+                return;
+            }
+
+            // Perform compression
+            huffmanCompressor.compress(text);
+
+            // Display compressed bits
+            String compressed = huffmanCompressor.getCompressedBits();
+            compressedBitsArea.setText(compressed);
+
+            // Display Huffman codes
+            Map<Character, String> codes = huffmanCompressor.getHuffmanCodes();
+            StringBuilder codesText = new StringBuilder();
+            codesText.append("Character : Code (Frequency)\n");
+            codesText.append("─────────────────────────────\n");
+
+            Map<Character, Integer> frequencies = huffmanCompressor.getCharacterFrequencies();
+            codes.entrySet().stream()
+                    .sorted((e1, e2) -> e1.getValue().length() != e2.getValue().length() ?
+                            Integer.compare(e1.getValue().length(), e2.getValue().length()) :
+                            e1.getValue().compareTo(e2.getValue()))
+                    .forEach(entry -> {
+                        char c = entry.getKey();
+                        String displayChar = (c == ' ' ? "␣" : c == '\n' ? "↵" : String.valueOf(c));
+                        codesText.append(String.format("    '%s'    : %s (%d)\n",
+                                displayChar, entry.getValue(), frequencies.get(c)));
+                    });
+
+            huffmanCodesArea.setText(codesText.toString());
+
+            // Display tree visualization
+            treeVisualizationArea.setText(huffmanCompressor.getTreeVisualization());
+
+            // Display statistics
+            updateCompressionStats();
+
+            // Clear decompressed area
+            decompressedTextArea.setText("");
+
+        } catch (Exception ex) {
+            showError("Error compressing text: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    private void decompressText() {
+        try {
+            if (huffmanCompressor.getCompressedBits() == null) {
+                showError("Please compress some text first.");
+                return;
+            }
+
+            String decompressed = huffmanCompressor.decompress();
+            decompressedTextArea.setText(decompressed);
+
+            // Verify correctness
+            if (decompressed.equals(huffmanCompressor.getOriginalText())) {
+                decompressedTextArea.setBackground(new Color(200, 255, 200));
+                JOptionPane.showMessageDialog(this,
+                        "✓ Decompression successful!\nText matches original.",
+                        "Success", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                decompressedTextArea.setBackground(new Color(255, 200, 200));
+                JOptionPane.showMessageDialog(this,
+                        "⚠ Decompression error!\nText doesn't match original.",
+                        "Error", JOptionPane.WARNING_MESSAGE);
+            }
+
+        } catch (Exception ex) {
+            showError("Error decompressing text: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    private void clearHuffman() {
+        huffmanCompressor = new HuffmanCompressor();
+        inputTextArea.setText("");
+        compressedBitsArea.setText("");
+        decompressedTextArea.setText("");
+        decompressedTextArea.setBackground(new Color(240, 255, 240));
+        huffmanCodesArea.setText("");
+        treeVisualizationArea.setText("");
+        compressionStatsLabel.setText("Compression Statistics: No data");
+    }
+
+    private void loadSampleText() {
+        String sampleText = "HELLO WORLD! THIS IS A HUFFMAN COMPRESSION DEMO. " +
+                "NOTICE HOW FREQUENT LETTERS GET SHORTER CODES!";
+        inputTextArea.setText(sampleText);
+        compressText();
+    }
+
+    private void updateCompressionStats() {
+        int originalBits = huffmanCompressor.getOriginalBits();
+        int compressedBits = huffmanCompressor.getCompressedBitCount();
+        double ratio = huffmanCompressor.getCompressionRatio();
+        int saved = originalBits - compressedBits;
+
+        String stats = String.format(
+                "Original: %d bits (%d chars × 8) | Compressed: %d bits | " +
+                        "Ratio: %.1f%% | Saved: %d bits (%.1f%%)",
+                originalBits, huffmanCompressor.getOriginalText().length(),
+                compressedBits, ratio, saved, 100.0 - ratio
+        );
+
+        compressionStatsLabel.setText(stats);
+    }
+
     // ========== Utility Methods ==========
-    
+
     private void showError(String message) {
         JOptionPane.showMessageDialog(this, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
-    
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             PriorityQueueGUI gui = new PriorityQueueGUI();
