@@ -15,12 +15,7 @@ Open these files and complete the TODO sections:
 
 ## Step 2: Run the Program
 
-Compile and run:
-```bash
-You'll launch from PriorityQueueGUI'
-```
-
-Then test your implementations and debug as needed!
+Just run Main.java to see all 3 programs
 
 ---
 
@@ -191,24 +186,3 @@ Once everything works:
 
 ---
 
-## Learning Objectives
-
-By completing these exercises, you will:
-- ✓ Understand how PriorityQueue works internally
-- ✓ Learn to create custom Comparators
-- ✓ Master multi-level comparison logic
-- ✓ See real-world PriorityQueue applications
-- ✓ Understand greedy algorithms (Huffman)
-- ✓ Learn about data compression principles
-- ✓ Build interactive GUIs with Java Swing
-
----
-
-Good luck! 🎯
-
-If you get stuck, remember:
-1. Read the TODO comments carefully
-2. Test with sample data
-3. Check the expected output above
-4. Print debug information
-5. Ask for help if needed!
